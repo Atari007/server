@@ -111,7 +111,7 @@ void MovementInfo::Read(ByteBuffer& data)
     }
 }
 
-void MovementInfo::Write(ByteBuffer& data) const
+void MovementInfo::Write(ByteBuffer& data)
 {
     data << moveFlags;
     data << moveFlags2;
@@ -150,6 +150,21 @@ void MovementInfo::Write(ByteBuffer& data) const
     {
         data << u_unk1;
     }
+
+    if (HasMovementFlag(MOVEFLAG_ROOT))
+        moveFlags &= ~MOVEFLAG_ROOT;
+
+    if (HasMovementFlag(MOVEFLAG_TURN_LEFT) && HasMovementFlag(MOVEFLAG_TURN_RIGHT))
+        moveFlags &= ~(MOVEFLAG_TURN_LEFT | MOVEFLAG_TURN_RIGHT);
+
+    if (HasMovementFlag(MOVEFLAG_STRAFE_LEFT) && HasMovementFlag(MOVEFLAG_STRAFE_RIGHT))
+        moveFlags &= ~(MOVEFLAG_STRAFE_LEFT | MOVEFLAG_STRAFE_RIGHT);
+
+    if (HasMovementFlag(MOVEFLAG_PITCH_UP) && HasMovementFlag(MOVEFLAG_PITCH_DOWN))
+        moveFlags &= ~(MOVEFLAG_PITCH_UP | MOVEFLAG_PITCH_DOWN);
+
+    if (HasMovementFlag(MOVEFLAG_FORWARD) && HasMovementFlag(MOVEFLAG_BACKWARD))
+        moveFlags &= ~(MOVEFLAG_FORWARD | MOVEFLAG_BACKWARD);
 }
 
 ////////////////////////////////////////////////////////////
@@ -5937,6 +5952,10 @@ uint32 Unit::SpellDamageBonusTaken(Unit* pCaster, SpellEntry const* spellProto, 
     // apply benefit affected by spell power implicit coeffs and spell level penalties
     TakenTotal = SpellBonusWithCoeffs(spellProto, TakenTotal, TakenAdvertisedBenefit, 0, damagetype, false);
 
+    // For proper bonus add for Seal of Vengeance in case Judgement of the Crusader.
+    if( spellProto->Id == 31803 )
+    TakenTotal /= 5;
+
     float tmpDamage = (int32(pdamage) + TakenTotal * int32(stack)) * TakenTotalMod;
 
     return tmpDamage > 0 ? uint32(tmpDamage) : 0;
@@ -5998,6 +6017,10 @@ int32 Unit::SpellBaseDamageBonusTaken(SpellSchoolMask schoolMask)
 
 bool Unit::IsSpellCrit(Unit* pVictim, SpellEntry const* spellProto, SpellSchoolMask schoolMask, WeaponAttackType attackType)
 {
+    // Creatures shouldn't crit with spells
+    if (GetObjectGuid().IsCreature())
+        return false;
+
     // not critting spell
     if (spellProto->HasAttribute(SPELL_ATTR_EX2_CANT_CRIT))
         return false;
