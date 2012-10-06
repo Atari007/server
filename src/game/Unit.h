@@ -609,10 +609,6 @@ enum MovementFlags
     MOVEFLAG_SAFE_FALL          = 0x20000000,               // active rogue safe fall spell (passive)
     MOVEFLAG_HOVER              = 0x40000000,
 
-    MOVEFLAG_MOVING =
-        MOVEFLAG_FORWARD | MOVEFLAG_BACKWARD | MOVEFLAG_STRAFE_LEFT | MOVEFLAG_STRAFE_RIGHT |
-        MOVEFLAG_PITCH_UP | MOVEFLAG_PITCH_DOWN | MOVEFLAG_FALLING | MOVEFLAG_FALLINGFAR | MOVEFLAG_ASCENDING | MOVEFLAG_CAN_FLY |
-        MOVEFLAG_SPLINE_ELEVATION
 };
 
 // flags that use in movement check for example at spell casting
@@ -635,7 +631,7 @@ public:
 
     // Read/Write methods
     void Read(ByteBuffer& data);
-    void Write(ByteBuffer& data);
+    void Write(ByteBuffer& data) const;
 
     // Movement flags manipulations
     void AddMovementFlag(MovementFlags f) { moveFlags |= f; }
@@ -699,7 +695,7 @@ private:
     float    u_unk1;
 };
 
-inline ByteBuffer& operator<< (ByteBuffer& buf, MovementInfo& mi)
+inline ByteBuffer& operator<< (ByteBuffer& buf, MovementInfo const& mi)
 {
     mi.Write(buf);
     return buf;
